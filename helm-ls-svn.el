@@ -36,5 +36,18 @@
   "Helm completion for svn repos."
   :group 'helm)
 
+(defun helm-ls-svn-ls ()
+  (interactive)
+  (helm :sources
+        (helm-build-in-buffer-source "SVN files"
+          :init
+          (lambda ()
+            (let ((root (vc-root-dir)))
+              (with-current-buffer (helm-candidate-buffer 'global)
+                (call-process-shell-command
+                 (format "find %s -type f -not -iwholename '*.svn/*'"
+                         root)
+                 nil t )))))))
+
 (provide 'helm-ls-svn)
 ;;; helm-ls-svn.el ends here
