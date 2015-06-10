@@ -36,18 +36,33 @@
   "Helm completion for svn repos."
   :group 'helm)
 
+(defun helm-ls-svn-root-dir (&optional directory)
+  (locate-dominating-file (or directory default-directory) ".svn"))
+
+(defun helm-ls-svn-not-inside-svn-repo ()
+  (not (helm-ls-svn-root-dir)))
+
+(defun helm-ls-svn-branch ()
+  (shell-command-to-string
+   "svn info | grep '^URL:' | egrep -o '(tags|branches)/[^/]+|trunk' | egrep -o '[^/]+$' | tr -d '\n'"))
+
+;;;###autoload
 (defun helm-ls-svn-ls ()
   (interactive)
+  (when (helm-ls-svn-not-inside-svn-repo)
+    (error "Not under a svn repository"))
   (helm :sources
         (helm-build-in-buffer-source "SVN files"
+          :header-name (lambda (name) (format "%s (%s)" name (helm-ls-svn-branch)))
           :init
           (lambda ()
-            (let ((root (vc-root-dir)))
+            (let ((root (helm-ls-svn-root-dir)))
               (with-current-buffer (helm-candidate-buffer 'global)
                 (call-process-shell-command
                  (format "find %s -type f -not -iwholename '*.svn/*'"
                          root)
-                 nil t )))))))
+                 nil t ))))
+          :candidate-number-limit 9999)))
 
 (provide 'helm-ls-svn)
 ;;; helm-ls-svn.el ends here
