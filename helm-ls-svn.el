@@ -36,6 +36,11 @@
   "Helm completion for svn repos."
   :group 'helm)
 
+(defvar helm-ls-svn-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map helm-generic-files-map)
+    map))
+
 (defun helm-ls-svn-root-dir (&optional directory)
   (locate-dominating-file (or directory default-directory) ".svn"))
 
@@ -50,7 +55,7 @@
 (defun helm-ls-svn-ls ()
   (interactive)
   (when (helm-ls-svn-not-inside-svn-repo)
-    (error "Not under a svn repository"))
+    (user-error "Not under a svn repository"))
   (helm :sources
         (helm-build-in-buffer-source "SVN files"
           :header-name (lambda (name) (format "%s (%s)" name (helm-ls-svn-branch)))
@@ -62,7 +67,11 @@
                  (format "find %s -type f -not -iwholename '*.svn/*'"
                          root)
                  nil t ))))
-          :candidate-number-limit 9999)))
+          :help-message helm-generic-file-help-message
+          :keymap helm-ls-svn-map
+          :candidate-number-limit 9999
+          :action (helm-actions-from-type-file))
+        :buffer "*helm ls svn*"))
 
 (provide 'helm-ls-svn)
 ;;; helm-ls-svn.el ends here
